@@ -5,18 +5,12 @@ using System.Text;
 
 namespace Models.User
 {
-    class Login : ILogin
+    public class Login
     {
         [Required]
         public string Email { get; set; }
 
         [Required]
         public string Password { get; set; }
-    }
-
-    public interface ILogin
-    {
-        string Email { get; set; }
-        string Password { get; set; }
     }
 }

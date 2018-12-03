@@ -6,49 +6,61 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using DAL;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Models.User;
 
 namespace Logic.Controllers
 {
-    public class AccountController : ControllerBase
+    [Route("api/[controller]/[action]")]
+    [ApiController]
+    public class UserController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly UserManager<IdentityUser> _userManager;
+        private User DalUser;
 
-        public AccountController(
+        public UserController(
+            UserManager<IdentityUser> userManager,
+            SignInManager<IdentityUser> signInManager,
             IConfiguration configuration,
-            UserManager<IdentityUser> userManager
+            RoleManager<IdentityRole> roleManager
         )
         {
-            _userManager = userManager;
             _configuration = configuration;
+
+        DalUser = new User(userManager, signInManager);
+        }
+        [HttpPost]
+        public async Task<object> Login([FromBody] Login model)
+        {
+            try
+            {
+                IdentityUser appUser = await DalUser.Login(model);
+
+                var JwtToken = await GenerateJwtToken(model.Email, appUser);
+
+                return "{ " +
+                       $" \"token\": \"{JwtToken}\" " +
+                       //$", \"role\":  \"{userRole[0]}\" " +
+                       "}"; // Return token as JSON
+            }
+            catch (Exception e)
+            {
+                return StatusCode(405);
+
+            }
         }
 
         [HttpPost]
-        public async Task<object> Login([FromBody] ILogin model)
+        public async Task<object> Register([FromBody] Login model)
         {
-            var user = new User();
-
-            var result = await user.Login(model);
-
-            if (result.Succeeded)
-            {
-                var JwtToken = await GenerateJwtToken(model.Email, appUser);
-
-                //var userRole = await _userManager.GetRolesAsync(appUser);
-
-                return  "{" +
-                            $" \"token\": \"{JwtToken}\" " +
-                            //$", \"role\":  \"{userRole[0]}\" " +
-                        "}"; // Return token as JSON
-            }
-
-            throw new ApplicationException("INVALID_LOGIN_ATTEMPT");
+            var user = await DalUser.Register(model);
+            
+            return await GenerateJwtToken(model.Email, user);
         }
 
         private async Task<object> GenerateJwtToken(string email, IdentityUser user)

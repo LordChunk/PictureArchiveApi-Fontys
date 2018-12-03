@@ -1,20 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.DataAnnotations;
-using System.IdentityModel.Tokens.Jwt;
-using System.Threading.Tasks;
 using System.Linq;
-using System.Security.Claims;
-using Models.User;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Models.User;
 
 namespace DAL
 {
-    public class User : ControllerBase
+    public class User
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
@@ -28,46 +24,39 @@ namespace DAL
             _signInManager = signInManager;
         }
 
-        public User() { }
-
-        public IdentityUser Login(ILogin model)
+        public async Task<IdentityUser> Login(Login model)
         {
-            var result = _signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
-
+            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
+            IdentityUser appUser;
 
             if (result.Succeeded)
             {
-                IdentityUser appUser = _userManager.Users.SingleOrDefault(r => r.Email == model.Email);
+               appUser = _userManager.Users.SingleOrDefault(r => r.Email == model.Email);
+            }
+            else
+            {
+                throw new ApplicationException("INVALID_LOGIN_ATTEMPT");
             }
 
-            return Task<Appuser>;}
+            return appUser;
         }
 
-        public async Task<object> Register(RegisterDto model)
+        public async Task<IdentityUser> Register(Login model)
         {
             var user = new IdentityUser
             {
                 UserName = model.Email,
                 Email = model.Email
             };
+
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
             {
                 await _signInManager.SignInAsync(user, false);
-
-                return await GenerateJwtToken(model.Email, user);
             }
 
-            throw new ApplicationException("UNKNOWN_ERROR");
-        }
-
-        public class RegisterDto
-        {
-            [Required]
-            public string Email { get; set; }
-            [StringLength(100, ErrorMessage = "PASSWORD_MIN_LENGTH", MinimumLength = 6)]
-            public string Password { get; set; }
+            return user;
         }
     }
 }
