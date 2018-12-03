@@ -12,7 +12,7 @@ using DAL;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Models.User;
+using Models;
 
 namespace Logic.Controllers
 {
@@ -35,7 +35,7 @@ namespace Logic.Controllers
         DalUser = new User(userManager, signInManager);
         }
         [HttpPost]
-        public async Task<object> Login([FromBody] Login model)
+        public async Task<object> Login([FromBody] MUser model)
         {
             try
             {
@@ -56,7 +56,7 @@ namespace Logic.Controllers
         }
 
         [HttpPost]
-        public async Task<object> Register([FromBody] Login model)
+        public async Task<object> Register([FromBody] MUser model)
         {
             var user = await DalUser.Register(model);
             

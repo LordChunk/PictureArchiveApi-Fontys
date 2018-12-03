@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using Models.User;
+using Models;
 
 namespace DAL
 {
@@ -23,7 +23,7 @@ namespace DAL
             _signInManager = signInManager;
         }
 
-        public async Task<IdentityUser> Login(Login model)
+        public async Task<IdentityUser> Login(MUser model)
         {
             var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
             IdentityUser appUser;
@@ -40,7 +40,7 @@ namespace DAL
             return appUser;
         }
 
-        public async Task<IdentityUser> Register(Login model)
+        public async Task<IdentityUser> Register(MUser model)
         {
             var user = new IdentityUser
             {
