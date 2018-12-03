@@ -21,7 +21,7 @@ namespace Logic.Controllers
     public class UserController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private User DalUser;
+        private readonly Authentication _authentication;
 
         public UserController(
             UserManager<IdentityUser> userManager,
@@ -31,15 +31,15 @@ namespace Logic.Controllers
         )
         {
             _configuration = configuration;
-
-        DalUser = new User(userManager, signInManager);
+            
+            _authentication = new Authentication(userManager, signInManager);
         }
         [HttpPost]
         public async Task<object> Login([FromBody] MUser model)
         {
             try
             {
-                IdentityUser appUser = await DalUser.Login(model);
+                IdentityUser appUser = await _authentication.Login(model);
 
                 var JwtToken = await GenerateJwtToken(model.Email, appUser);
 
@@ -58,7 +58,7 @@ namespace Logic.Controllers
         [HttpPost]
         public async Task<object> Register([FromBody] MUser model)
         {
-            var user = await DalUser.Register(model);
+            var user = await _authentication.Register(model);
             
             return await GenerateJwtToken(model.Email, user);
         }

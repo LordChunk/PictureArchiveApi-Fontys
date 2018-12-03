@@ -9,12 +9,12 @@ using Models;
 
 namespace DAL
 {
-    public class User
+    public class Authentication
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
 
-        public User(
+        public Authentication(
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager
         )
