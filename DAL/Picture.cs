@@ -20,38 +20,14 @@ namespace DAL
     public class Picture
     {
         private readonly string _connectionString;
-        private readonly IHostingEnvironment _environment;
         private readonly string _azureConnectionString;
         public Picture(
             string connectionString,
-            IHostingEnvironment environment,
             string azureConnectionString
             )
         {
             _connectionString = connectionString;
-            _environment = environment;
             _azureConnectionString = azureConnectionString;
-        }
-
-        public async Task<object> StorePicture(IFormFileCollection files, string userId)
-        {
-
-            List<string> fileNamesList = new List<string>();
-
-            foreach (var file in files)
-            {
-                if (file.Length > 0)
-                {
-                    // Write file
-                    string pictureGuid = WriteFile(file, userId);
-
-                    // Add file location to list
-                    fileNamesList.Add(pictureGuid);
-                }
-            }
-
-            AddFilePathsToDb(fileNamesList, userId);
-            return fileNamesList;
         }
 
         public List<MPicture> GetPictures(int amount)
@@ -151,32 +127,7 @@ namespace DAL
         {
             command.Parameters.Add(new SqlParameter(name, value));
         }
-
-        private string WriteFile(IFormFile file, string userId)
-        {
-            var fileName = string.Empty;
-            var folderName = string.Empty;
-
-            var newFileName = ConvertFileToGuidFile(file);
-
-            // Gets foldername for ensurefolder
-            folderName = Path.Combine(_environment.WebRootPath, "userPictures", userId);
-
-            // Combines two strings into a path.
-            fileName = folderName + $@"\{newFileName}";
-
-            EnsureFolder(fileName);
-
-            using (FileStream fs = System.IO.File.Create(fileName))
-            {
-                file.CopyTo(fs);
-                fs.Flush();
-            }
-
-            // Return file name (can then be converted to location)
-            return newFileName;
-        }
-
+        
         private string ConvertFileToGuidFile(IFormFile file)
         {
             string pictureGuid = Convert.ToString(Guid.NewGuid());

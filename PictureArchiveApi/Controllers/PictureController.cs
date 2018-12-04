@@ -20,49 +20,15 @@ namespace Logic.Controllers
     [ApiController]
     public class PictureController : ControllerBase
     {
-        private readonly IHostingEnvironment _environment;
         private DAL.Picture DalPicture;
         private readonly UserManager<IdentityUser> _userManager;
 
         public PictureController(
-            IHostingEnvironment IHostingEnvironment,
             UserManager<IdentityUser> userManager
         )
         {
-            _environment = IHostingEnvironment;
             _userManager = userManager;
-            DalPicture = new Picture(Startup.ConnectionString, _environment, Startup.AzureStorageConnectionString);
-        }
-
-
-        // api/picture/upload
-        [Authorize]
-        [Route("wwwRootUpload")]
-        [HttpPost]
-        public async Task<object> Upload()
-        {
-            string newFileName = string.Empty;
-
-            if (HttpContext.Request.Form.Files != null)
-            {
-                IFormFileCollection files = HttpContext.Request.Form.Files;
-
-                string token = Request.Headers.GetCommaSeparatedValues("Authorization").First().Remove(0, 7);
-
-                string email = new JwtSecurityTokenHandler().ReadJwtToken(token).Subject;
-
-                IdentityUser user = new IdentityUser
-                {
-                    Email = email,
-                    UserName = email
-                };
-
-                user = await _userManager.GetUserAsync(HttpContext.User);
-
-                await DalPicture.StorePicture(files, user.Id);
-            }
-
-            return Ok();
+            DalPicture = new Picture(Startup.ConnectionString, Startup.AzureStorageConnectionString);
         }
 
         // api/picture
