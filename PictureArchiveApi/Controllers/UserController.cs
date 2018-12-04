@@ -43,10 +43,7 @@ namespace Logic.Controllers
 
                 var JwtToken = await GenerateJwtToken(model.Email, appUser);
 
-                return "{ " +
-                       $" \"token\": \"{JwtToken}\" " +
-                       //$", \"role\":  \"{userRole[0]}\" " +
-                       "}"; // Return token as JSON
+                return JwtToken;
             }
             catch (Exception)
             {
@@ -83,7 +80,12 @@ namespace Logic.Controllers
                 signingCredentials: creds
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var rawToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return "{ " +
+                   $" \"token\": \"{rawToken}\" " +
+                   //$", \"role\":  \"{userRole[0]}\" " +
+                   "}"; // Return token as JSON
         }
     }
 }
