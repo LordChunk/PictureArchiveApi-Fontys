@@ -26,11 +26,13 @@ namespace PictureArchiveApi
         {
             Configuration = configuration;
             ConnectionString = configuration.GetConnectionString("DefaultConnectionString");
+            AzureStorageConnectionString = configuration.GetConnectionString("AzureStorageConnectionString-1");
         }
 
         public IConfiguration Configuration { get; }
 
         public static string ConnectionString;
+        public static string AzureStorageConnectionString;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -83,7 +85,7 @@ namespace PictureArchiveApi
                     };
                 });
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

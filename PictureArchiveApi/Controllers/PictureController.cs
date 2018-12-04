@@ -21,23 +21,23 @@ namespace Logic.Controllers
     public class PictureController : ControllerBase
     {
         private readonly IHostingEnvironment _environment;
-        private DAL.Picture DalPicture;    
+        private DAL.Picture DalPicture;
         private readonly UserManager<IdentityUser> _userManager;
 
         public PictureController(
             IHostingEnvironment IHostingEnvironment,
             UserManager<IdentityUser> userManager
-            )
+        )
         {
             _environment = IHostingEnvironment;
             _userManager = userManager;
-            DalPicture = new Picture(Startup.ConnectionString, _environment);
+            DalPicture = new Picture(Startup.ConnectionString, _environment, Startup.AzureStorageConnectionString);
         }
 
 
         // api/picture/upload
         [Authorize]
-        [Route("upload")]
+        [Route("wwwRootUpload")]
         [HttpPost]
         public async Task<object> Upload()
         {
@@ -64,7 +64,7 @@ namespace Logic.Controllers
 
             return Ok();
         }
-        
+
         // api/picture
         [Authorize]
         [HttpGet("{id?}")]
@@ -83,7 +83,33 @@ namespace Logic.Controllers
             {
                 referencesList.Add($"/{picture.UserId}/{picture.Id}");
             }
+
             return referencesList;
+        }
+
+        [HttpPost]
+        [Route("upload")]
+        [Authorize]
+        public async Task UploadToBlobAsync()
+        {
+            if (HttpContext.Request.Form.Files != null)
+            {
+                IFormFileCollection files = HttpContext.Request.Form.Files;
+
+                string token = Request.Headers.GetCommaSeparatedValues("Authorization").First().Remove(0, 7);
+
+                string email = new JwtSecurityTokenHandler().ReadJwtToken(token).Subject;
+
+                IdentityUser user = new IdentityUser
+                {
+                    Email = email,
+                    UserName = email
+                };
+
+                user = await _userManager.GetUserAsync(HttpContext.User);
+
+                DalPicture.StorePictureInBlobStorage(files, user.Id);
+            }
         }
     }
 }
