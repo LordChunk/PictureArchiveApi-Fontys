@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>
+    <UserSecretsId>65933ef7-f9ab-4903-9209-1de0bdd3ef76</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

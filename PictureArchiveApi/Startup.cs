@@ -83,7 +83,7 @@ namespace PictureArchiveApi
                     };
                 });
 
-            services.AddMvc();
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -107,17 +107,17 @@ namespace PictureArchiveApi
             app.UseAuthentication();
 
             app.UseHttpsRedirection();
+
             app.UseMvc();
             //app.UseMvc(routes =>
             //{
             //    routes.MapRoute(
-            //        "default",
-            //        "{controller}/{action}",
-            //        new { action = "DefaultAction" }
+            //        "Default",
+            //        "{controller}/{action=Index}/{id?}"
             //        );
             //});
 
-            // Create tables
+            //Create tables
             dbContext.Database.EnsureCreated();
             /*
              * EnsureCreated can be used to create the database and tables in prototyping and testing scenarios. 

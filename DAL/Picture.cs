@@ -10,19 +10,20 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Models;
 
 namespace DAL
 {
     public class Picture
     {
-        private readonly string _connectiongString;
+        private readonly string _connectionString;
         private readonly IHostingEnvironment _environment;
         public Picture(
-            string ConnectionString,
+            string connectionString,
             IHostingEnvironment environment
             )
         {
-            _connectiongString = ConnectionString;
+            _connectionString = connectionString;
             _environment = environment;
         }
 
@@ -47,9 +48,44 @@ namespace DAL
             return fileNamesList;
         }
 
+        public List<MPicture> GetPictures(int amount)
+        {
+            List<MPicture> pictureList = new List<MPicture>();
+
+            // Open connection and execute procedure
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand command = new SqlCommand("GetPictures", conn))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+
+                addParameter(command, "amount", amount.ToString());
+
+                conn.Open();
+                DbDataReader reader = command.ExecuteReader();
+
+                // Loop through all row
+                while (reader.Read())
+                {
+                    // Create picture element
+                    MPicture newPicture = new MPicture
+                    {
+                        Id = reader.GetValue(0).ToString(),
+                        UserId    = reader.GetValue(1).ToString()
+                    };
+
+                    // Add to list
+                    pictureList.Add(newPicture);
+                }
+
+                conn.Close();
+            }
+
+            return pictureList;
+        }
+
         private void AddFilePathsToDb(List<string> fileNameList, string userId)
         {
-            using (SqlConnection conn = new SqlConnection(_connectiongString))
+            using (SqlConnection conn = new SqlConnection(_connectionString))
             foreach (string filename in fileNameList)
             {
                 using (SqlCommand command = new SqlCommand("AddPicture", conn))
@@ -64,11 +100,10 @@ namespace DAL
                     conn.Close();
                 }
             }
-
-            void addParameter(SqlCommand command, string name, string value)
-            {
-                command.Parameters.Add(new SqlParameter(name, value));
-            }
+        }
+        private void addParameter(SqlCommand command, string name, string value)
+        {
+            command.Parameters.Add(new SqlParameter(name, value));
         }
 
         private string WriteFile(IFormFile file, string userId)

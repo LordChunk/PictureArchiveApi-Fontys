@@ -11,12 +11,12 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
+using Models;
 using PictureArchiveApi;
 
 namespace Logic.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class PictureController : ControllerBase
     {
@@ -34,7 +34,10 @@ namespace Logic.Controllers
             DalPicture = new Picture(Startup.ConnectionString, _environment);
         }
 
+
+        // api/picture/upload
         [Authorize]
+        [Route("upload")]
         [HttpPost]
         public async Task<object> Upload()
         {
@@ -60,6 +63,27 @@ namespace Logic.Controllers
             }
 
             return Ok();
+        }
+        
+        // api/picture
+        [Authorize]
+        [HttpGet("{id?}")]
+        public List<string> Index(int id)
+        {
+            // Check for invalid data
+            if (id <= 0 || id > 100)
+            {
+                id = 10;
+            }
+
+            List<string> referencesList = new List<string>();
+
+            // Convert picture element to URL to image
+            foreach (MPicture picture in DalPicture.GetPictures(id))
+            {
+                referencesList.Add($"/{picture.UserId}/{picture.Id}");
+            }
+            return referencesList;
         }
     }
 }

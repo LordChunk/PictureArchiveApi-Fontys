@@ -48,10 +48,9 @@ namespace Logic.Controllers
                        //$", \"role\":  \"{userRole[0]}\" " +
                        "}"; // Return token as JSON
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return StatusCode(405);
-
             }
         }
 
