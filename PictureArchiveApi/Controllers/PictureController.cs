@@ -54,9 +54,9 @@ namespace Logic.Controllers
                     UserName = email
                 };
 
-                var userId = await _userManager.GetUserIdAsync(user);
+                user = await _userManager.GetUserAsync(HttpContext.User);
 
-                await DalPicture.StorePicture(files, userId);
+                await DalPicture.StorePicture(files, user.Id);
             }
 
             return Ok();

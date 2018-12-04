@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
+using System.Data.SqlClient;
 using System.IO;
 using System.Net.Http.Headers;
 using System.Text;
@@ -27,39 +29,64 @@ namespace DAL
         public async Task<object> StorePicture(IFormFileCollection files, string userId)
         {
 
-            List<string> filepaths = new List<string>();
+            List<string> fileNamesList = new List<string>();
 
             foreach (var file in files)
             {
                 if (file.Length > 0)
                 {
-                    // Write file and get file db location
-                    string dbRef = WriteFile(file, userId);
+                    // Write file
+                    string pictureGuid = WriteFile(file, userId);
 
                     // Add file location to list
-                    filepaths.Add(dbRef);
+                    fileNamesList.Add(pictureGuid);
                 }
             }
-            return filepaths;
+
+            AddFilePathsToDb(fileNamesList, userId);
+            return fileNamesList;
+        }
+
+        private void AddFilePathsToDb(List<string> fileNameList, string userId)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectiongString))
+            foreach (string filename in fileNameList)
+            {
+                using (SqlCommand command = new SqlCommand("AddPicture", conn))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    addParameter(command, "Id", filename);
+                    addParameter(command, "UserId", userId);
+
+                    conn.Open();
+                    command.ExecuteNonQuery();
+                    conn.Close();
+                }
+            }
+
+            void addParameter(SqlCommand command, string name, string value)
+            {
+                command.Parameters.Add(new SqlParameter(name, value));
+            }
         }
 
         private string WriteFile(IFormFile file, string userId)
         {
             var fileName = string.Empty;
             var folderName = string.Empty;
-            string PathDB = string.Empty;
+            
+            // Assigning Unique Filename (Guid)
+            string pictureGuid = Convert.ToString(Guid.NewGuid());
 
             // Getting FileName
             fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.ToString();
-
-            // Assigning Unique Filename (Guid)
-            var myUniqueFileName = Convert.ToString(Guid.NewGuid());
-
+            
             // Getting file Extension
             var FileExtension = Path.GetExtension(fileName);
 
             // Concating  FileName + FileExtension + remove the \ character at the end of the string
-            var newFileName = myUniqueFileName + FileExtension.Replace("\"", "");
+            var newFileName = pictureGuid + FileExtension.Replace("\"", "");
 
             // Gets foldername for ensurefolder
             folderName = Path.Combine(_environment.WebRootPath, "userPictures", userId);
@@ -75,8 +102,8 @@ namespace DAL
                 fs.Flush();
             }
 
-            // Return file location
-            return "userPictures/" + userId + newFileName;
+            // Return file name (can then be converted to location)
+            return newFileName;
         }
 
         // Checks if folder has already been created and creates one if false
