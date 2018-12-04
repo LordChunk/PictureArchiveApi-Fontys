@@ -16,7 +16,7 @@ using PictureArchiveApi;
 
 namespace Logic.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class PictureController : ControllerBase
     {

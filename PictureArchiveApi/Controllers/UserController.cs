@@ -16,7 +16,7 @@ using Models;
 
 namespace Logic.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class UserController : ControllerBase
     {
