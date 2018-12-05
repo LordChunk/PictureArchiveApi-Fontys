@@ -43,9 +43,9 @@ namespace PictureArchiveApi
                 options.AddPolicy("AllowTrusted",
                     builder =>
                     {
-                        builder.WithOrigins("http://localhost:4200", "https://picture.fontys.me")
+                        builder.WithOrigins("http://localhost:4200", "https://images.chu.mk")
                             .SetIsOriginAllowedToAllowWildcardSubdomains()
-                            .WithOrigins("https://*.picuture.fontys.me")
+                            .WithOrigins("https://*.images.chu.mk")
                             .AllowAnyMethod()
                             .AllowAnyHeader()
                             .AllowCredentials()
