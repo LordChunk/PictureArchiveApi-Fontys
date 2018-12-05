@@ -79,10 +79,11 @@ namespace DAL
             // Create list for file names
             List<string> fileNameList = new List<string>();
 
-            // Create data reader for form files 
-            var data = new MemoryStream();
             foreach (var file in files)
             {
+                // Create data reader for form files 
+                var data = new MemoryStream();
+
                 // Get GUID file name with file extension
                 string fileName = ConvertFileToGuidFile(file);
 
