@@ -4,13 +4,8 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.IO;
-using System.Linq;
 using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Models;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -30,7 +25,7 @@ namespace DAL
             _azureConnectionString = azureConnectionString;
         }
 
-        public List<MPicture> GetPictures(int amount)
+        public List<MPicture> GetPictures(int amount = 0, int offset = 0)
         {
             List<MPicture> pictureList = new List<MPicture>();
 
@@ -39,8 +34,10 @@ namespace DAL
             using (SqlCommand command = new SqlCommand("GetPictures", conn))
             {
                 command.CommandType = CommandType.StoredProcedure;
-
-                addParameter(command, "amount", amount.ToString());
+                
+                // Check for negative values and exclude them if so
+                if (amount > 0) { addParameter(command, "amount", amount.ToString()); }
+                if (offset > 0) { addParameter(command, "offset", offset.ToString()); }
 
                 conn.Open();
                 DbDataReader reader = command.ExecuteReader();

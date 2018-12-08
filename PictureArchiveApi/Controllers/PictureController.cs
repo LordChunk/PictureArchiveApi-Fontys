@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.IO;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using DAL;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -33,19 +29,13 @@ namespace Logic.Controllers
 
         // api/picture
         [Authorize]
-        [HttpGet("{id?}")]
-        public List<string> Index(int id)
+        [HttpGet]
+        public List<string> Index(int amount = 0, int offset = 0)
         {
-            // Check for invalid data
-            if (id <= 0 || id > 100)
-            {
-                id = 10;
-            }
-
             List<string> referencesList = new List<string>();
 
             // Convert picture element to URL to image
-            foreach (MPicture picture in DalPicture.GetPictures(id))
+            foreach (MPicture picture in DalPicture.GetPictures(amount, offset))
             {
                 referencesList.Add($"/{picture.UserId}/{picture.Id}");
             }
