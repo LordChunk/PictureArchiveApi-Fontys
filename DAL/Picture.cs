@@ -79,38 +79,43 @@ namespace DAL
                 var data = new MemoryStream();
 
                 // Generate file reference
-                string fileRef = $"{file.UserId}/{file.Id}";
+                string fileRef = $"{file.UserId}/{file.Id}.{file.FileExtension}";
 
                 // Retrieve reference to a blob named "myblob".
                 CloudBlockBlob blockBlob = container.GetBlockBlobReference(fileRef);
 
                 // Configure blob upload
-                blockBlob.Properties.ContentType = file.FileExtension;
+                //blockBlob.Properties.ContentType = file.FileExtension; 
+                // ^replaced by just manually adding the file extension with the file ref
                 await blockBlob.UploadFromByteArrayAsync(file.Base64, 0, file.Base64.Length);
 
-                uriList.Add(blockBlob.StorageUri.PrimaryUri.AbsoluteUri);
+                // Add item to database
+                AddDbRef(file);
+
+                // Add item to list
+                uriList.Add(fileRef);
             }
 
             // Return URI list
             return uriList;
         }
 
-        private void AddFilePathsToDb(List<string> fileNameList, string userId)
+        private void AddDbRef(DalPicture picture)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
-            foreach (string filename in fileNameList)
+            using (SqlCommand command = new SqlCommand("AddPicture", conn))
             {
-                using (SqlCommand command = new SqlCommand("AddPicture", conn))
-                {
-                    command.CommandType = CommandType.StoredProcedure;
+                command.CommandType = CommandType.StoredProcedure;
 
-                    addParameter(command, "Id", filename);
-                    addParameter(command, "UserId", userId);
+                addParameter(command, "Id", picture.Id);
+                addParameter(command, "UserId", picture.UserId);
+                addParameter(command, "Name", picture.Name);
+                addParameter(command, "Date", picture.Date);
+                addParameter(command, "@FileExtension", picture.FileExtension);
 
-                    conn.Open();
-                    command.ExecuteNonQuery();
-                    conn.Close();
-                }
+                conn.Open();
+                command.ExecuteNonQuery();
+                conn.Close();
             }
         }
         private void addParameter(SqlCommand command, string name, string value)
