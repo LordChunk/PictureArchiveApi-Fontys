@@ -25,9 +25,9 @@ namespace DAL
             _azureConnectionString = azureConnectionString;
         }
 
-        public List<MPicture> GetPictures(int amount = 0, int offset = 0)
+        public List<DalPicture> GetPictures(int amount = 0, int offset = 0)
         {
-            List<MPicture> pictureList = new List<MPicture>();
+            List<DalPicture> pictureList = new List<DalPicture>();
 
             // Open connection and execute procedure
             using (SqlConnection conn = new SqlConnection(_connectionString))
@@ -46,7 +46,7 @@ namespace DAL
                 while (reader.Read())
                 {
                     // Create picture element
-                    MPicture newPicture = new MPicture
+                    DalPicture newPicture = new DalPicture
                     {
                         Id = reader.GetValue(0).ToString(),
                         UserId    = reader.GetValue(1).ToString()
@@ -62,7 +62,7 @@ namespace DAL
             return pictureList;
         }
 
-        public void StorePictureInBlobStorage(IFormFileCollection files, string userId)
+        public void StorePictureInBlobStorage(List<LogicPicture> files, string userId)
         {
             // Create storage account
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_azureConnectionString);
