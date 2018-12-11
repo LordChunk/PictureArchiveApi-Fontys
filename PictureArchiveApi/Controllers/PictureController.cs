@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -46,7 +47,7 @@ namespace Logic.Controllers
         [HttpPost]
         [Route("upload")]
         [Authorize]
-        public async Task<object> UploadToBlobAsync([FromBody]List<LogicPicture> pictures)
+        public async Task<List<string>> UploadToBlobAsync([FromBody]List<LogicPicture> pictures)
         {
             if(pictures.Count > 0)
             {
@@ -68,40 +69,27 @@ namespace Logic.Controllers
                 foreach(LogicPicture picture in pictures)
                 {
                     string fileExtension = Regex.Match(picture.Base64, @"(?<=\/)(.*)(?=;)").Groups.FirstOrDefault().Value;
+                    string id = Convert.ToString(Guid.NewGuid());
+                    byte[] base64 = Convert.FromBase64String(picture.Base64.Split(',')[1]);
 
                     DalPicture dalPicture = new DalPicture()
                     {
                         Name = picture.Name,
                         UserId = user.Id,
+                        Id = id,
+                        Base64 = base64,
+                        MetaTags = picture.MetaTags,
+                        Date = picture.Date,
+                        FileExtension = fileExtension,
                     };
+
+                    dalPictures.Add(dalPicture);
                 }
 
-                _dalPicture.StorePictureInBlobStorage(pictures, user.Id);
+                return await _dalPicture.StorePictureInBlobStorage(dalPictures);
             }
 
-
-            //temp async fix
-            IdentityUser tempuser = new IdentityUser();
-            return await _userManager.IsLockedOutAsync(tempuser);
-
-            //if (HttpContext.Request.Form.Files != null)
-            //{
-            //    IFormFileCollection files = HttpContext.Request.Form.Files;
-
-            //    string token = Request.Headers.GetCommaSeparatedValues("Authorization").First().Remove(0, 7);
-
-            //    string email = new JwtSecurityTokenHandler().ReadJwtToken(token).Subject;
-
-            //    IdentityUser user = new IdentityUser
-            //    {
-            //        Email = email,
-            //        UserName = email
-            //    };
-
-            //    user = await _userManager.GetUserAsync(HttpContext.User);
-
-            //    DalPicture.StorePictureInBlobStorage(files, user.Id);
-            //}
+            return null;
         }
     }
 }

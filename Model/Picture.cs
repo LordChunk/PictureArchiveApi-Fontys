@@ -13,6 +13,7 @@ namespace Models
         public string Id { get; set; }
         public string UserId { get; set; }
         public byte[] Base64 { get; set; }
+        public string FileExtension { get; set; }
     }
 
     public class LogicPicture : Picture

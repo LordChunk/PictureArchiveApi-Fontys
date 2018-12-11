@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.IO;
-using System.Net.Http.Headers;
-using Microsoft.AspNetCore.Http;
 using Models;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+using System.Threading.Tasks;
 
 namespace DAL
 {
@@ -62,7 +60,7 @@ namespace DAL
             return pictureList;
         }
 
-        public void StorePictureInBlobStorage(List<LogicPicture> files, string userId)
+        public async Task<List<string>> StorePictureInBlobStorage(List<DalPicture> files)
         {
             // Create storage account
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_azureConnectionString);
@@ -72,35 +70,29 @@ namespace DAL
 
             // Retrieve reference to a previously created container.
             CloudBlobContainer container = blobClient.GetContainerReference("userpictures");
-            
-            // Create list for file names
-            List<string> fileNameList = new List<string>();
+
+            List<string> uriList = new List<string>();
 
             foreach (var file in files)
             {
                 // Create data reader for form files 
                 var data = new MemoryStream();
 
-                // Get GUID file name with file extension
-                string fileName = ConvertFileToGuidFile(file);
-
                 // Generate file reference
-                string fileRef = $"{userId}/{fileName}";
+                string fileRef = $"{file.UserId}/{file.Id}";
 
                 // Retrieve reference to a blob named "myblob".
                 CloudBlockBlob blockBlob = container.GetBlockBlobReference(fileRef);
 
-                // Convert form data to Byte array
-                file.CopyTo(data);
-                var fileBytes = data.ToArray();
-                
-                blockBlob.UploadFromByteArrayAsync(fileBytes, 0, fileBytes.Length);
+                // Configure blob upload
+                blockBlob.Properties.ContentType = file.FileExtension;
+                await blockBlob.UploadFromByteArrayAsync(file.Base64, 0, file.Base64.Length);
 
-                fileNameList.Add(fileName);
+                uriList.Add(blockBlob.StorageUri.PrimaryUri.AbsoluteUri);
             }
 
-            // Add all file names to the database
-            AddFilePathsToDb(fileNameList, userId);
+            // Return URI list
+            return uriList;
         }
 
         private void AddFilePathsToDb(List<string> fileNameList, string userId)
@@ -124,32 +116,6 @@ namespace DAL
         private void addParameter(SqlCommand command, string name, string value)
         {
             command.Parameters.Add(new SqlParameter(name, value));
-        }
-        
-        private string ConvertFileToGuidFile(IFormFile file)
-        {
-            string pictureGuid = Convert.ToString(Guid.NewGuid());
-
-            // Getting FileName
-            var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName;
-
-            // Getting file Extension + remove the \ character at the end of the string
-            var FileExtension = Path.GetExtension(fileName).Replace("\"", "");
-
-            // Combining FileName + FileExtension
-           return pictureGuid + FileExtension;
-        }
-
-        // Checks if folder has already been created and creates one if false
-        private void EnsureFolder(string path)
-        {
-            string directoryName = Path.GetDirectoryName(path);
-            // If path is a file name only, directory name will be an empty string
-            if (directoryName.Length > 0)
-            {
-                // Create all directories on the path that don't already exist
-                Directory.CreateDirectory(directoryName);
-            }
         }
     }
 }
