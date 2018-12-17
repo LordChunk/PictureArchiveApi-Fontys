@@ -7,6 +7,7 @@ using Models;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Threading.Tasks;
+using System;
 
 namespace DAL
 {
@@ -47,7 +48,8 @@ namespace DAL
                     DalPicture newPicture = new DalPicture
                     {
                         Id = reader.GetValue(0).ToString(),
-                        UserId    = reader.GetValue(1).ToString()
+                        UserId = reader.GetValue(1).ToString(),
+                        FileExtension = reader.GetValue(2).ToString()
                     };
 
                     // Add to list
@@ -90,7 +92,7 @@ namespace DAL
                 await blockBlob.UploadFromByteArrayAsync(file.Base64, 0, file.Base64.Length);
 
                 // Add item to database
-                AddDbRef(file);
+                AddImageDataToDb(file);
 
                 // Add item to list
                 uriList.Add(fileRef);
@@ -100,7 +102,7 @@ namespace DAL
             return uriList;
         }
 
-        private void AddDbRef(DalPicture picture)
+        private void AddImageDataToDb(DalPicture picture)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             using (SqlCommand command = new SqlCommand("AddPicture", conn))
@@ -117,7 +119,81 @@ namespace DAL
                 command.ExecuteNonQuery();
                 conn.Close();
             }
+
+            // Add Metatag to db and add metatag link in link table
+            foreach(string metaTag in picture.MetaTags)
+            {
+                // Add metatag and get metatag id
+                string id = AddMetaTag(metaTag);
+
+                // Add link between picture and metatag
+                addPictureMetaTagLink(id, picture.Id);
+            }
         }
+
+        private string AddMetaTag(string name)
+        {
+            string Id;
+            // Add new row
+            try
+            {
+                Id = Convert.ToString(Guid.NewGuid());
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                using (SqlCommand command = new SqlCommand("AddMetaTag", conn))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    addParameter(command, "Id", Id);
+                    addParameter(command, "Name", name);
+
+                    conn.Open();
+                    command.ExecuteNonQuery();
+                    conn.Close();
+                }
+
+                return Id;
+            }
+            // If meta tag already exists get already created metatag id
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                using (SqlCommand command = new SqlCommand("GetMetaTagId", conn))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    
+                    addParameter(command, "Name", name);
+
+                    conn.Open();
+                    DbDataReader reader = command.ExecuteReader();
+
+                    // Get first row
+                    reader.Read();
+                    Id = reader.GetValue(0).ToString();
+                    
+                    conn.Close();
+
+                    return Id;
+                }
+            }
+        }
+        private void addPictureMetaTagLink(string metaTagId, string pictureId)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand command = new SqlCommand("PictureMetaTagLink", conn))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+
+                addParameter(command, "MetaTagId", metaTagId);
+                addParameter(command, "PictureId", pictureId);
+
+                conn.Open();
+                command.ExecuteNonQuery();
+                conn.Close();
+            }
+        }
+
+        // slight shorthand for adding parameters
         private void addParameter(SqlCommand command, string name, string value)
         {
             command.Parameters.Add(new SqlParameter(name, value));

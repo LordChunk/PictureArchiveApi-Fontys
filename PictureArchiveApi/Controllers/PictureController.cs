@@ -38,7 +38,7 @@ namespace Logic.Controllers
             // Convert picture element to URL to image
             foreach (DalPicture picture in _dalPicture.GetPictures(amount, offset))
             {
-                referencesList.Add($"/{picture.UserId}/{picture.Id}");
+                referencesList.Add($"/{picture.UserId}/{picture.Id}.{picture.FileExtension}");
             }
 
             return referencesList;
