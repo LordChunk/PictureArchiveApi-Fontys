@@ -1,0 +1,7 @@
+#docker build --rm -f "PictureArchiveApi\Dockerfile" -t picturearchiveapi:latest PictureArchiveApi	
+FROM microsoft/dotnet:2.1-sdk
+COPY ./publish /publish
+WORKDIR /publish
+EXPOSE 5000/tcp
+RUN dotnet publish -c Release -o publish
+ENTRYPOINT ["dotnet", "Logic.dll"]
